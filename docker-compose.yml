@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: nestjs_postgres
+    restart: always
+    ports:
+      - '5433:5432' # Bilgisayarının 5432 portunu, konteynerin 5432 portuna bağlar
+    environment:
+      POSTGRES_USER: myuser # Veritabanı kullanıcı adı
+      POSTGRES_PASSWORD: mypassword # Veritabanı şifresi
+      POSTGRES_DB: delivery_app # Oluşturulacak veritabanı adı
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Veriler kaybolmasın diye kalıcı alan
+
+volumes:
+  postgres_data:
