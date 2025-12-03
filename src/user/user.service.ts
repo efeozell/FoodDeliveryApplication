@@ -33,7 +33,10 @@ export class UserService {
       address,
     });
 
-    return this.userRepo.save(user);
+    const savedUser = await this.userRepo.save(user);
+
+    const { password: _, ...userWithoutPassword } = savedUser;
+    return userWithoutPassword as User;
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -45,6 +48,8 @@ export class UserService {
     if (!user) {
       throw new NotFoundException('Kullanici bulunamadi');
     }
-    return user;
+
+    const { password: _, ...userWithoutPassword } = user;
+    return userWithoutPassword as User;
   }
 }

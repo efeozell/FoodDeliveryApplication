@@ -39,6 +39,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException();
     }
+
+    if (user.email !== payload.email) {
+      throw new UnauthorizedException('Token maili eslesmiyor');
+    }
     //Buradaki dondurdugumuz user istegin kuyruguna eklenir req.user
     return user;
   }

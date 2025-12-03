@@ -1,6 +1,7 @@
 import {
   IsEmail,
   IsEnum,
+  IsNotEmpty,
   IsOptional,
   IsString,
   MaxLength,
@@ -14,6 +15,7 @@ export class RegisterDto {
 
   @IsString()
   @MinLength(6)
+  @IsNotEmpty({ message: 'Sifre gereklidir' })
   password: string;
 
   @IsString()

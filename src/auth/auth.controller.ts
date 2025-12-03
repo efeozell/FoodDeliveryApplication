@@ -44,7 +44,8 @@ export class AuthController {
       maxAge: 60 * 60 * 1000,
     });
 
-    return user;
+    const { access_token, ...userWithoutToken } = user;
+    return userWithoutToken;
   }
 
   @Post('logout')
