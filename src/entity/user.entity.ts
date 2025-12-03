@@ -1,5 +1,6 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Order } from './order.entity';
+import { Exclude } from 'class-transformer';
 
 export enum UserRole {
   ADMIN = 'ADMIN',
@@ -8,23 +9,28 @@ export enum UserRole {
 
 @Entity('users') //users tablosu
 export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ unique: true, nullable: false })
   email: string;
 
   @Column({ nullable: false })
+  name: string;
+
+  @Column({ nullable: false })
+  @Exclude()
   password: string;
 
   @Column({
     type: 'enum',
     enum: UserRole,
     nullable: false,
+    default: UserRole.CUSTOMER,
   })
   role: UserRole;
 
-  @Column({ nullable: false })
+  @Column({ nullable: true })
   address: string;
 
   @OneToMany(() => Order, (order) => order.user)
