@@ -20,6 +20,33 @@ export class Restaurant {
   @Column({ default: true })
   isOpen: boolean;
 
+  @Column({ nullable: false })
+  cuisine: string;
+
+  @Column({ nullable: false })
+  city: string;
+
+  @Column({ nullable: false })
+  district: string;
+
+  @Column({ type: 'decimal', precision: 3, scale: 2, nullable: false })
+  rating: number;
+
+  @Column({ type: 'int', default: 0 })
+  reviewCount: number;
+
+  @Column({ type: 'int', nullable: false })
+  deliveryTime: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  deliveryFee: number;
+
+  @Column({ nullable: true })
+  image: string;
+
+  @Column({ nullable: true })
+  phone: string;
+
   //Bir restorant'in birden fazla menuItem'i olabilir
   @OneToMany(() => MenuItem, (menuItem) => menuItem.restaurant)
   menuItems: MenuItem[];

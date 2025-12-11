@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -24,12 +25,23 @@ export class Order {
   id: string;
 
   @ManyToOne(() => User, (user) => user.orders)
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
+  @Column({ name: 'user_id' })
+  userId: string;
+
   @ManyToOne(() => Restaurant, (restaurant) => restaurant.orders)
+  @JoinColumn({ name: 'restaurant_id' })
   restaurant: Restaurant;
 
-  @OneToMany(() => OrderItem, (orderItem) => orderItem.order, { cascade: true })
+  @Column({ name: 'restaurant_id' })
+  restaurantId: string;
+
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.order, {
+    eager: true,
+    cascade: true,
+  })
   orderItems: OrderItem[];
 
   @Column({
@@ -38,6 +50,9 @@ export class Order {
     default: OrderStatus.PENDING,
   })
   status: OrderStatus;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  totalAmount: number;
 
   @Column()
   deliveryAddress: string;
@@ -54,4 +69,7 @@ export class Order {
     onUpdate: 'CURRENT_TIMESTAMP',
   })
   updatedAt: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  deliveredAt: Date;
 }

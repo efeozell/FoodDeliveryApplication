@@ -3,12 +3,21 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { RedisModule } from '@nestjs-modules/ioredis';
+import { RestaurantsModule } from './restaurants/restaurants.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+    }),
+    RedisModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        type: 'single',
+        url: configService.get<string>('REDIS_URL'),
+      }),
+      inject: [ConfigService],
     }),
     TypeOrmModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
@@ -26,6 +35,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     }),
     AuthModule,
     UserModule,
+    RestaurantsModule,
   ],
   controllers: [],
   providers: [],
