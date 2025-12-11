@@ -3,8 +3,9 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UserModule } from 'src/user/user.module';
 import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { ConfigService, ConfigModule } from '@nestjs/config';
+import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { ConfigService, ConfigModule } from '@nestjs/config';
     UserModule,
     PassportModule,
     JwtModule.registerAsync({
-      useFactory: (configService: ConfigService) => {
+      useFactory: (configService: ConfigService): JwtModuleOptions => {
         const secret = configService.get<string>('JWT_SECRET');
         if (!secret || secret.trim().length === 0) {
           throw new Error('JWT_SECRET bulunamadi');
@@ -22,15 +23,19 @@ import { ConfigService, ConfigModule } from '@nestjs/config';
             'JWT_SECRET must be at least 32 characters for security',
           );
         }
+        const expiresIn =
+          configService.get<string>('JWT_ACCESS_TOKEN_EXPIRATION') || '15m';
         return {
           secret,
-          signOptions: { expiresIn: '1h' },
+          signOptions: {
+            expiresIn: expiresIn as any,
+          },
         };
       },
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService],
+  providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
   exports: [AuthService],
 })

@@ -1,14 +1,27 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Order } from './order.entity';
 import { MenuItem } from './menu_items.entity';
 
-@Entity('order-items')
+@Entity('order_items')
 export class OrderItem {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Order, (order) => order.orderItems)
+  @ManyToOne(() => Order, (order) => order.orderItems, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'order_id' })
   order: Order;
+
+  @Column({ name: 'order_id' })
+  orderId: string;
+
+  @Column()
+  name: string;
 
   @ManyToOne(() => MenuItem)
   menuItem: MenuItem;
@@ -20,5 +33,5 @@ export class OrderItem {
   price: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
-  subtotal: number;
+  totalPrice: number;
 }
