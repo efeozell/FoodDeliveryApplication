@@ -464,6 +464,8 @@ GET /api/v1/restaurants?page=1&limit=20&city=Istanbul&minRating=4.0
 
 ---
 
+✅ TAMAMLANDI
+
 ### 3.3. GET `/api/v1/restaurants/:id/menu` - Restoran Menüsü
 
 **Response (200 OK):**
@@ -529,6 +531,8 @@ GET /api/v1/restaurants?page=1&limit=20&city=Istanbul&minRating=4.0
 
 ---
 
+✅ TAMAMLANDI
+
 ### 3.4. GET `/api/v1/menu-items/:id` - Menü Öğesi Detayı
 
 **Response (200 OK):**
@@ -570,6 +574,8 @@ GET /api/v1/restaurants?page=1&limit=20&city=Istanbul&minRating=4.0
 
 ---
 
+✅ TAMAMLANDI
+
 ### 3.5. Restoran Yönetimi (Admin/Restoran Sahibi)
 
 **Rol Gereksinimi:** `ADMIN` veya `RESTAURANT_OWNER`
@@ -607,6 +613,8 @@ GET /api/v1/restaurants?page=1&limit=20&city=Istanbul&minRating=4.0
 
 ---
 
+✅ TAMAMLANDI
+
 #### PATCH `/api/v1/restaurants/:id` - Restoran Güncelle
 
 **Request:**
@@ -620,6 +628,8 @@ GET /api/v1/restaurants?page=1&limit=20&city=Istanbul&minRating=4.0
 
 ---
 
+✅ TAMAMLANDI
+
 #### DELETE `/api/v1/restaurants/:id` - Restoran Sil
 
 **Response (200 OK):**
@@ -632,6 +642,10 @@ GET /api/v1/restaurants?page=1&limit=20&city=Istanbul&minRating=4.0
 ```
 
 ---
+
+//TODO: Burada kaldik
+//Bu endpoint tamamlandi ama bazi onlemler eklenicek
+✅ TAMAMLANDI
 
 #### POST `/api/v1/restaurants/:id/menu-items` - Menü Öğesi Ekle
 
@@ -656,6 +670,8 @@ image: [File]
 ## 🔍 4. Arama (Search)
 
 ### **Performans Hedefi:** Response < 300ms, Case-insensitive
+
+✅ TAMAMLANDI
 
 ### 4.1. GET `/api/v1/search` - Genel Arama
 

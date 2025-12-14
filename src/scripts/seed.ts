@@ -18,7 +18,7 @@ async function seed() {
     password: process.env.DB_PASSWORD || 'mypassword',
     database: process.env.DB_NAME || 'delivery_app',
     entities: [User, Restaurant, Category, MenuItem, Order, OrderItem],
-    synchronize: false,
+    synchronize: true, // Şemayı otomatik güncelle
   });
 
   try {
@@ -147,6 +147,7 @@ async function seed() {
           address: `${faker.location.streetAddress()}, ${district}, ${city}`,
           city: city,
           district: district,
+          phone: `05${faker.string.numeric(9)}`, // Türk telefon formatı 05XXXXXXXXX
           minOrderAmount: parseFloat(
             faker.number
               .float({ min: 30, max: 100, fractionDigits: 2 })

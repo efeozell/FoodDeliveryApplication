@@ -30,7 +30,7 @@ export class Restaurant {
   district: string;
 
   @Column({ type: 'decimal', precision: 3, scale: 2, nullable: false })
-  rating: number;
+  rating: number = 0;
 
   @Column({ type: 'int', default: 0 })
   reviewCount: number;
@@ -48,14 +48,18 @@ export class Restaurant {
   phone: string;
 
   //Bir restorant'in birden fazla menuItem'i olabilir
-  @OneToMany(() => MenuItem, (menuItem) => menuItem.restaurant)
+  @OneToMany(() => MenuItem, (menuItem) => menuItem.restaurant, {
+    cascade: true,
+  })
   menuItems: MenuItem[];
 
   //Bir restorant'in birden fazla kategorisi olabilir
-  @OneToMany(() => Category, (category) => category.restaurant)
+  @OneToMany(() => Category, (category) => category.restaurant, {
+    cascade: true,
+  })
   categories: Category[];
 
-  @OneToMany(() => Order, (order) => order.restaurant)
+  @OneToMany(() => Order, (order) => order.restaurant, { cascade: true })
   orders: Order[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })

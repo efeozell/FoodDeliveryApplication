@@ -46,60 +46,42 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    try {
-      const user = await this.userService.findByEmail(loginDto.email);
+    const user = await this.userService.findByEmail(loginDto.email);
 
-      if (!user) {
-        throw new UnauthorizedException('Email veya sifre hatali!');
-      }
-
-      const isPasswordValid = await bcrypt.compare(
-        loginDto.password,
-        user.password,
-      );
-
-      if (!isPasswordValid) {
-        throw new UnauthorizedException('Email veya sifre hatali!');
-      }
-
-      const accessToken = this.generateAccessToken(
-        user.id,
-        user.email,
-        user.role,
-      );
-      const refreshToken = await this.generateRefreshToken(user.id);
-
-      return {
-        statusCode: 200,
-        message: 'Giris basarili',
-        data: {
-          user: {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
-          },
-        },
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      };
-    } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        return {
-          statusCode: 401,
-          message: 'Email veya şifre hatalı',
-          error: 'Unauthorized',
-          timestamp: '2025-12-07T10:30:00.000Z',
-          path: '/api/v1/auth/login',
-        };
-      } else {
-        return {
-          statusCode: 500,
-          message: 'Giris yapilirken hata olustu',
-          error: error,
-        };
-      }
+    if (!user) {
+      throw new UnauthorizedException('Email veya sifre hatali!');
     }
+
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      user.password,
+    );
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Email veya sifre hatali!');
+    }
+
+    const accessToken = this.generateAccessToken(
+      user.id,
+      user.email,
+      user.role,
+    );
+    const refreshToken = await this.generateRefreshToken(user.id);
+
+    return {
+      statusCode: 200,
+      message: 'Giris basarili',
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        },
+      },
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    };
   }
 
   async refreshToken(refreshToken: string) {
