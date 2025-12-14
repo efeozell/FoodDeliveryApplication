@@ -1,5 +1,4 @@
-import { Optional } from '@nestjs/common';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export enum SearchType {
   RESTAURANT = 'restaurant',
@@ -8,15 +7,16 @@ export enum SearchType {
 }
 
 export class SearchDto {
-  @Optional()
+  @IsOptional()
   @IsString()
   q?: string;
 
-  @Optional()
+  @IsOptional()
   @IsString()
+  @IsEnum(SearchType)
   type?: SearchType = SearchType.RESTAURANT;
 
-  @Optional()
+  @IsOptional()
   @IsString()
   city?: string;
 }

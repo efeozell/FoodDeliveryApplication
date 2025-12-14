@@ -1,4 +1,10 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  DeleteDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Category } from './category.entity';
 import { MenuItem } from './menu_items.entity';
 import { Order } from './order.entity';
@@ -29,7 +35,13 @@ export class Restaurant {
   @Column({ nullable: false })
   district: string;
 
-  @Column({ type: 'decimal', precision: 3, scale: 2, nullable: false })
+  @Column({
+    type: 'decimal',
+    precision: 3,
+    scale: 2,
+    nullable: false,
+    default: 0,
+  })
   rating: number = 0;
 
   @Column({ type: 'int', default: 0 })
@@ -59,7 +71,7 @@ export class Restaurant {
   })
   categories: Category[];
 
-  @OneToMany(() => Order, (order) => order.restaurant, { cascade: true })
+  @OneToMany(() => Order, (order) => order.restaurant)
   orders: Order[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
@@ -67,4 +79,7 @@ export class Restaurant {
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
+
+  @DeleteDateColumn()
+  deletedAt: Date;
 }

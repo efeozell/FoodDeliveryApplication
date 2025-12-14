@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsPositive, IsString } from 'class-validator';
 
 export class CreateMenuItemsDto {
   @IsString()
@@ -11,6 +11,8 @@ export class CreateMenuItemsDto {
   description: string;
 
   @IsNotEmpty()
+  @IsNumber()
+  @IsPositive()
   @Type(() => Number)
   price: number;
 

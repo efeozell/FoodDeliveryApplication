@@ -9,6 +9,10 @@ import { Order, OrderStatus } from '../entity/order.entity';
 import { OrderItem } from '../entity/order-item.entity';
 
 async function seed() {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Seed işlemi production ortamında çalıştırılamaz!');
+  }
+
   // Database bağlantısı
   const dataSource = new DataSource({
     type: 'postgres',

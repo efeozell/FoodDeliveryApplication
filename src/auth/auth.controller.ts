@@ -35,15 +35,12 @@ export class AuthController {
   }
 
   @Post('login')
+  @HttpCode(HttpStatus.OK)
   async login(
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) response: Response,
   ) {
     const result = await this.authService.login(loginDto);
-
-    if (result.statusCode !== 200 || !result.access_token) {
-      throw new UnauthorizedException(result.message || 'Giris basarisiz');
-    }
 
     // Access token'ı cookie'ye kaydet
     response.cookie('access_token', result.access_token, {

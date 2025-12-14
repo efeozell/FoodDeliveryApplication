@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectRedis } from '@nestjs-modules/ioredis';
@@ -46,42 +50,51 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const user = await this.userService.findByEmail(loginDto.email);
+    try {
+      const user = await this.userService.findByEmail(loginDto.email);
 
-    if (!user) {
-      throw new UnauthorizedException('Email veya sifre hatali!');
-    }
+      const dummyHash = this.configService.get<string>('DUMMY_HASH') || '';
+      const targetPassword = user ? user.password : dummyHash;
 
-    const isPasswordValid = await bcrypt.compare(
-      loginDto.password,
-      user.password,
-    );
+      const isPasswordValid = await bcrypt.compare(
+        loginDto.password,
+        targetPassword,
+      );
 
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Email veya sifre hatali!');
-    }
+      if (!user || !isPasswordValid) {
+        throw new UnauthorizedException('Email veya sifre hatali!');
+      }
 
-    const accessToken = this.generateAccessToken(
-      user.id,
-      user.email,
-      user.role,
-    );
-    const refreshToken = await this.generateRefreshToken(user.id);
+      const accessToken = this.generateAccessToken(
+        user.id,
+        user.email,
+        user.role,
+      );
+      const refreshToken = await this.generateRefreshToken(user.id);
 
-    return {
-      statusCode: 200,
-      message: 'Giris basarili',
-      data: {
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
+      return {
+        statusCode: 200,
+        message: 'Giris basarili',
+        data: {
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          },
         },
-      },
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    };
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
+        'Giriş işlemi sırasında beklenmedik bir hata oluştu.',
+      );
+    }
   }
 
   async refreshToken(refreshToken: string) {

@@ -148,16 +148,16 @@ export class RestaurantsController {
     return menu;
   }
 
+  @Get('/menu-items/:id')
+  async getMenuItemDetails(@Param('id') id: string) {
+    const menuItem = await this.restaurantService.getMenuItemDetails(id);
+    return menuItem;
+  }
+
   @Get('/:id')
   async getRestaurantById(@Param('id') id: string) {
     const restaurant = await this.restaurantService.getRestaurantById(id);
 
     return restaurant;
-  }
-
-  @Get('/menu-items/:id')
-  async getMenuItemDetails(@Param('id') id: string) {
-    const menuItem = await this.restaurantService.getMenuItemDetails(id);
-    return menuItem;
   }
 }

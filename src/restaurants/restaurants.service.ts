@@ -214,6 +214,9 @@ export class RestaurantsService {
       };
     } catch (error) {
       console.log('Error in getMenuItemDetails: ', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new InternalServerErrorException(
         'Menu item getirilirken bir hata!',
       );
@@ -254,6 +257,9 @@ export class RestaurantsService {
       return await this.restaurantRepo.save(updatedRestaurant);
     } catch (error) {
       console.log('Error in updareRestaurant: ', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new InternalServerErrorException(
         'Restoran güncellenirken bir hata oluştu!',
       );
@@ -273,6 +279,9 @@ export class RestaurantsService {
       await this.restaurantRepo.remove(isRestaurantExist);
     } catch (error) {
       console.log('Error in deleteRestaurant: ', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new InternalServerErrorException(
         'Restoran silinirken bir hata oluştu!',
       );
@@ -293,9 +302,17 @@ export class RestaurantsService {
         throw new NotFoundException('Restoran bulunamadi');
       }
 
+      const category = await this.restaurantRepo.manager.findOne(Category, {
+        where: { id: data.categoryId, restaurant: { id } },
+      });
+
+      if (!category) {
+        throw new NotFoundException('Kategori bulunamadi');
+      }
+
       const newMenuItem = this.menuItemRepo.create({
         restaurant: isRestaurantExist,
-        category: { id: data.categoryId } as Category,
+        category: category,
         ...data,
         imageUrl: file,
       });
@@ -304,6 +321,9 @@ export class RestaurantsService {
       return savedMenuItem;
     } catch (error) {
       console.log('Error in addMenuItemsByRestaurantId: ', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new InternalServerErrorException(
         'Menu item eklenirken bir hata oluştu!',
       );

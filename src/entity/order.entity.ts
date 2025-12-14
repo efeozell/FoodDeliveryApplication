@@ -31,9 +31,7 @@ export class Order {
   @Column({ name: 'user_id' })
   userId: string;
 
-  @ManyToOne(() => Restaurant, (restaurant) => restaurant.orders, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(() => Restaurant, (restaurant) => restaurant.orders)
   @JoinColumn({ name: 'restaurant_id' })
   restaurant: Restaurant;
 

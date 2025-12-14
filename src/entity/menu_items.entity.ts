@@ -27,7 +27,7 @@ export class MenuItem {
 
   //Bir suru menuItem'in bir kategorisi olabilir
   @ManyToOne(() => Category, (category) => category.menuItems, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   category: Category;
 
