@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectRedis } from '@nestjs-modules/ioredis';
@@ -49,16 +53,15 @@ export class AuthService {
     try {
       const user = await this.userService.findByEmail(loginDto.email);
 
-      if (!user) {
-        throw new UnauthorizedException('Email veya sifre hatali!');
-      }
+      const dummyHash = this.configService.get<string>('DUMMY_HASH') || '';
+      const targetPassword = user ? user.password : dummyHash;
 
       const isPasswordValid = await bcrypt.compare(
         loginDto.password,
-        user.password,
+        targetPassword,
       );
 
-      if (!isPasswordValid) {
+      if (!user || !isPasswordValid) {
         throw new UnauthorizedException('Email veya sifre hatali!');
       }
 
@@ -85,20 +88,12 @@ export class AuthService {
       };
     } catch (error) {
       if (error instanceof UnauthorizedException) {
-        return {
-          statusCode: 401,
-          message: 'Email veya şifre hatalı',
-          error: 'Unauthorized',
-          timestamp: '2025-12-07T10:30:00.000Z',
-          path: '/api/v1/auth/login',
-        };
-      } else {
-        return {
-          statusCode: 500,
-          message: 'Giris yapilirken hata olustu',
-          error: error,
-        };
+        throw error;
       }
+
+      throw new InternalServerErrorException(
+        'Giriş işlemi sırasında beklenmedik bir hata oluştu.',
+      );
     }
   }
 

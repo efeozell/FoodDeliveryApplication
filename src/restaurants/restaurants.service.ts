@@ -1,6 +1,7 @@
 import {
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
   UseGuards,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,6 +11,11 @@ import { Restaurant } from 'src/entity/restaurant.entity';
 import { Category } from 'src/entity/category.entity';
 import { User } from 'src/entity/user.entity';
 import { Brackets, Repository } from 'typeorm';
+import { MenuItem } from 'src/entity/menu_items.entity';
+import { CreateRestaurantDto } from 'src/dto/create-restaurant.dto';
+import { UpdateRestaurantDto } from 'src/dto/update-restaurant.dto';
+import { CreateMenuItemsDto } from 'src/dto/create-menu-items.dto';
+import { SearchDto, SearchType } from 'src/dto/search.dto';
 
 @UseGuards(JwtAuthGuard)
 @Injectable()
@@ -17,6 +23,8 @@ export class RestaurantsService {
   constructor(
     @InjectRepository(Restaurant)
     private readonly restaurantRepo: Repository<Restaurant>,
+    @InjectRepository(MenuItem)
+    private readonly menuItemRepo: Repository<MenuItem>,
   ) {}
 
   async getRestaurants(user: User, restaurantQueryDto: RestaurantQueryDto) {
@@ -94,7 +102,7 @@ export class RestaurantsService {
         where: { id },
       });
       if (!restaurant) {
-        throw new InternalServerErrorException('Restoran bulunamadi');
+        throw new NotFoundException('Restoran bulunamadi');
       }
 
       return {
@@ -130,7 +138,7 @@ export class RestaurantsService {
       });
 
       if (!restaurant) {
-        throw new InternalServerErrorException('Restoran bulunamadi');
+        throw new NotFoundException('Restoran bulunamadi');
       }
 
       // Kategorileri ve içindeki menu item'ları getir
@@ -170,5 +178,226 @@ export class RestaurantsService {
       console.log('Error in getRestaurantMenu: ', error);
       throw new InternalServerErrorException('Menu getirilirken bir hata!');
     }
+  }
+
+  async getMenuItemDetails(itemId: string) {
+    try {
+      const menuItem = await this.menuItemRepo
+        .createQueryBuilder('menuItem')
+        .leftJoinAndSelect('menuItem.category', 'category')
+        .leftJoinAndSelect('menuItem.restaurant', 'restaurant')
+        .where('menuItem.id = :itemId', { itemId })
+        .getOne();
+
+      if (!menuItem) {
+        throw new NotFoundException('Menu item bulunamadi');
+      }
+
+      return {
+        statusCode: 200,
+        data: {
+          id: menuItem.id,
+          name: menuItem.name,
+          description: menuItem.description,
+          price: Number(menuItem.price),
+          image: menuItem.imageUrl,
+          isAvailable: menuItem.isAvaiable,
+          restaurant: {
+            id: menuItem.restaurant.id,
+            name: menuItem.restaurant.name,
+          },
+          category: {
+            id: menuItem.category.id,
+            name: menuItem.category.name,
+          },
+        },
+      };
+    } catch (error) {
+      console.log('Error in getMenuItemDetails: ', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Menu item getirilirken bir hata!',
+      );
+    }
+  }
+
+  async createRestaurant(data: CreateRestaurantDto) {
+    try {
+      const newRestaurant = this.restaurantRepo.create({
+        ...data,
+        deliveryFee: Number(data.deliveryFee),
+      });
+
+      return await this.restaurantRepo.save(newRestaurant);
+    } catch (error) {
+      console.log('Error in createRestaurant: ', error);
+      throw new InternalServerErrorException(
+        'Restoran oluşturulurken bir hata oluştu!',
+      );
+    }
+  }
+
+  async updateRestaurant(id: string, data: UpdateRestaurantDto) {
+    try {
+      const isRestaurantExist = await this.restaurantRepo.findOne({
+        where: { id },
+      });
+
+      if (!isRestaurantExist) {
+        throw new NotFoundException('Restoran bulunamadi');
+      }
+
+      const updatedRestaurant = this.restaurantRepo.merge(isRestaurantExist, {
+        ...data,
+        deliveryFee: data.deliveryFee ? Number(data.deliveryFee) : undefined,
+      });
+
+      return await this.restaurantRepo.save(updatedRestaurant);
+    } catch (error) {
+      console.log('Error in updareRestaurant: ', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Restoran güncellenirken bir hata oluştu!',
+      );
+    }
+  }
+
+  async deleteRestaurant(id: string) {
+    try {
+      const isRestaurantExist = await this.restaurantRepo.findOne({
+        where: { id },
+      });
+
+      if (!isRestaurantExist) {
+        throw new NotFoundException('Restoran bulunamadi');
+      }
+
+      await this.restaurantRepo.remove(isRestaurantExist);
+    } catch (error) {
+      console.log('Error in deleteRestaurant: ', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Restoran silinirken bir hata oluştu!',
+      );
+    }
+  }
+
+  async addMenuItemsByRestaurantId(
+    id: string,
+    data: CreateMenuItemsDto,
+    file: any,
+  ) {
+    try {
+      const isRestaurantExist = await this.restaurantRepo.findOne({
+        where: { id },
+      });
+
+      if (!isRestaurantExist) {
+        throw new NotFoundException('Restoran bulunamadi');
+      }
+
+      const category = await this.restaurantRepo.manager.findOne(Category, {
+        where: { id: data.categoryId, restaurant: { id } },
+      });
+
+      if (!category) {
+        throw new NotFoundException('Kategori bulunamadi');
+      }
+
+      const newMenuItem = this.menuItemRepo.create({
+        restaurant: isRestaurantExist,
+        category: category,
+        ...data,
+        imageUrl: file,
+      });
+      const savedMenuItem = await this.menuItemRepo.save(newMenuItem);
+
+      return savedMenuItem;
+    } catch (error) {
+      console.log('Error in addMenuItemsByRestaurantId: ', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Menu item eklenirken bir hata oluştu!',
+      );
+    }
+  }
+
+  async generalSearch(searchTerm: SearchDto): Promise<{
+    restaurant?: Restaurant[];
+    menuItem?: MenuItem[];
+  }> {
+    try {
+      const { q, type = 'all', city } = searchTerm;
+      const results: { restaurant?: Restaurant[]; menuItem?: MenuItem[] } = {};
+
+      if (type === SearchType.ALL || type === SearchType.RESTAURANT) {
+        results.restaurant = await this.searchRestaurants(q, city);
+      }
+
+      if (type === SearchType.ALL || type === SearchType.MENU_ITEM) {
+        results.menuItem = await this.searchMenuItems(q, city);
+      }
+
+      return results;
+    } catch (error) {
+      console.log('Error in generalSearch: ', error);
+      throw new InternalServerErrorException(
+        'Genel arama sırasında bir hata oluştu!',
+      );
+    }
+  }
+
+  private async searchRestaurants(q?: string, city?: string) {
+    const queryBuilder = this.restaurantRepo.createQueryBuilder('restaurant');
+
+    // Arama terimi varsa isimde ara
+    if (q) {
+      queryBuilder.where('restaurant.name ILIKE :q', { q: `%${q}%` });
+    }
+
+    // Şehir filtresi varsa ekle
+    if (city) {
+      if (q) {
+        queryBuilder.andWhere('restaurant.city = :city', { city });
+      } else {
+        queryBuilder.where('restaurant.city = :city', { city });
+      }
+    }
+
+    // Hiçbir filtre yoksa tüm restoranları getir
+    return await queryBuilder.take(10).getMany();
+  }
+
+  private async searchMenuItems(q?: string, city?: string) {
+    const queryBuilder = this.menuItemRepo
+      .createQueryBuilder('menuItem')
+      .leftJoinAndSelect('menuItem.restaurant', 'restaurant');
+
+    // Arama terimi varsa isim veya açıklamada ara
+    if (q) {
+      queryBuilder.where(
+        '(menuItem.name ILIKE :q OR menuItem.description ILIKE :q)',
+        { q: `%${q}%` },
+      );
+    }
+
+    // Şehir filtresi varsa ekle
+    if (city) {
+      if (q) {
+        queryBuilder.andWhere('restaurant.city = :city', { city });
+      } else {
+        queryBuilder.where('restaurant.city = :city', { city });
+      }
+    }
+
+    return await queryBuilder.take(10).getMany();
   }
 }

@@ -20,11 +20,15 @@ export class MenuItem {
   imageUrl: string;
 
   //Bu yemek (MenuItem), sadece TEK BİR restorana ait olabilir.
-  @ManyToOne(() => Restaurant, (restaurant) => restaurant.menuItems)
+  @ManyToOne(() => Restaurant, (restaurant) => restaurant.menuItems, {
+    onDelete: 'CASCADE',
+  })
   restaurant: Restaurant;
 
   //Bir suru menuItem'in bir kategorisi olabilir
-  @ManyToOne(() => Category, (category) => category.menuItems)
+  @ManyToOne(() => Category, (category) => category.menuItems, {
+    onDelete: 'RESTRICT',
+  })
   category: Category;
 
   @Column({ default: true })

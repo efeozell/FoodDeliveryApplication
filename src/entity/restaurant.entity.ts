@@ -1,4 +1,10 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  DeleteDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Category } from './category.entity';
 import { MenuItem } from './menu_items.entity';
 import { Order } from './order.entity';
@@ -29,8 +35,14 @@ export class Restaurant {
   @Column({ nullable: false })
   district: string;
 
-  @Column({ type: 'decimal', precision: 3, scale: 2, nullable: false })
-  rating: number;
+  @Column({
+    type: 'decimal',
+    precision: 3,
+    scale: 2,
+    nullable: false,
+    default: 0,
+  })
+  rating: number = 0;
 
   @Column({ type: 'int', default: 0 })
   reviewCount: number;
@@ -48,11 +60,15 @@ export class Restaurant {
   phone: string;
 
   //Bir restorant'in birden fazla menuItem'i olabilir
-  @OneToMany(() => MenuItem, (menuItem) => menuItem.restaurant)
+  @OneToMany(() => MenuItem, (menuItem) => menuItem.restaurant, {
+    cascade: true,
+  })
   menuItems: MenuItem[];
 
   //Bir restorant'in birden fazla kategorisi olabilir
-  @OneToMany(() => Category, (category) => category.restaurant)
+  @OneToMany(() => Category, (category) => category.restaurant, {
+    cascade: true,
+  })
   categories: Category[];
 
   @OneToMany(() => Order, (order) => order.restaurant)
@@ -63,4 +79,7 @@ export class Restaurant {
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
+
+  @DeleteDateColumn()
+  deletedAt: Date;
 }

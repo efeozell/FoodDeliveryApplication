@@ -20,7 +20,9 @@ export class Category {
   description: string;
 
   //Bir suru kategori olabilir ve bu kategoriler restorant'a baglidir
-  @ManyToOne(() => Restaurant, (restaurant) => restaurant.categories)
+  @ManyToOne(() => Restaurant, (restaurant) => restaurant.categories, {
+    onDelete: 'CASCADE',
+  })
   restaurant: Restaurant;
 
   //Bir kategorinin birden fazla menuItem'i olabilir
