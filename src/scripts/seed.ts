@@ -7,6 +7,7 @@ import { Category } from '../entity/category.entity';
 import { MenuItem } from '../entity/menu_items.entity';
 import { Order, OrderStatus } from '../entity/order.entity';
 import { OrderItem } from '../entity/order-item.entity';
+import { CartItem } from '../entity/cart-item.entity';
 
 async function seed() {
   if (process.env.NODE_ENV === 'production') {
@@ -21,7 +22,15 @@ async function seed() {
     username: process.env.DB_USERNAME || 'myuser',
     password: process.env.DB_PASSWORD || 'mypassword',
     database: process.env.DB_NAME || 'delivery_app',
-    entities: [User, Restaurant, Category, MenuItem, Order, OrderItem],
+    entities: [
+      User,
+      Restaurant,
+      Category,
+      MenuItem,
+      Order,
+      OrderItem,
+      CartItem,
+    ],
     synchronize: true, // Şemayı otomatik güncelle
   });
 
@@ -31,6 +40,7 @@ async function seed() {
 
     // Veritabanını temizle (cascade delete için sıralama önemli)
     console.log('🗑️  Mevcut veriler temizleniyor...');
+    await dataSource.query('TRUNCATE TABLE cart_items CASCADE');
     await dataSource.query('TRUNCATE TABLE order_items CASCADE');
     await dataSource.query('TRUNCATE TABLE orders CASCADE');
     await dataSource.query('TRUNCATE TABLE menu_item CASCADE');
@@ -317,6 +327,62 @@ async function seed() {
 
     console.log(`✅ ${totalOrders} sipariş oluşturuldu`);
 
+    // Sepet öğeleri oluştur
+    console.log('🛒 Sepet öğeleri oluşturuluyor...');
+    const cartItemRepo = dataSource.getRepository(CartItem);
+
+    let totalCartItems = 0;
+
+    // İlk 5 test kullanıcısı için sepet öğeleri oluştur
+    const testUsers = users
+      .filter((u) => u.role === UserRole.CUSTOMER)
+      .slice(0, 5);
+
+    for (const user of testUsers) {
+      // Her kullanıcı için 1-3 restorandan ürün seçelim
+      const numRestaurants = faker.number.int({ min: 1, max: 2 });
+      const selectedRestaurants = faker.helpers.arrayElements(
+        restaurants.filter((r) => r.isOpen),
+        numRestaurants,
+      );
+
+      for (const restaurant of selectedRestaurants) {
+        // Bu restorana ait menü itemlerini filtrele
+        const restaurantMenuItems = allMenuItems.filter(
+          (item) => item.restaurant.id === restaurant.id && item.isAvaiable,
+        );
+
+        if (restaurantMenuItems.length === 0) continue;
+
+        // 1-4 arası menü öğesi seç
+        const numItems = faker.number.int({ min: 1, max: 4 });
+        const selectedItems = faker.helpers.arrayElements(
+          restaurantMenuItems,
+          Math.min(numItems, restaurantMenuItems.length),
+        );
+
+        // Sepet öğelerini oluştur
+        for (const menuItem of selectedItems) {
+          const quantity = faker.number.int({ min: 1, max: 3 });
+
+          await cartItemRepo.save(
+            cartItemRepo.create({
+              user: user,
+              menuItem: menuItem,
+              restaurant: restaurant,
+              quantity: quantity,
+            }),
+          );
+
+          totalCartItems++;
+        }
+      }
+    }
+
+    console.log(
+      `✅ ${totalCartItems} sepet öğesi oluşturuldu (${testUsers.length} kullanıcı için)`,
+    );
+
     console.log('\n🎉 Seed işlemi başarıyla tamamlandı!');
     console.log(`
 📊 Özet:
@@ -324,6 +390,7 @@ async function seed() {
 - ${restaurants.length} restoran
 - Kategoriler ve menü öğeleri
 - ${totalOrders} sipariş
+- ${totalCartItems} sepet öğesi
     `);
 
     await dataSource.destroy();
