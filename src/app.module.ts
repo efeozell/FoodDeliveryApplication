@@ -5,6 +5,8 @@ import { UserModule } from './user/user.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { RestaurantsModule } from './restaurants/restaurants.module';
+import { OrderModule } from './order/order.module';
+import { CartModule } from './cart/cart.module';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { RestaurantsModule } from './restaurants/restaurants.module';
     AuthModule,
     UserModule,
     RestaurantsModule,
+    OrderModule,
+    CartModule,
   ],
   controllers: [],
   providers: [],

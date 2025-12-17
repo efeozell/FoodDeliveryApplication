@@ -733,10 +733,12 @@ GET /api/v1/search?q=burger&type=all&city=Istanbul
 ### Frontend'in Beklentisi:
 
 - Sepet kullanıcıya özel olmalı (token ile ilişkilendirilmiş)
-- Aynı sepette **sadece bir restoranın** ürünleri olabilir
+- Aynı sepette **sadece bir restoranın** ürünleri olabilir //TODO
 - Farklı restorandan ürün eklenirse mevcut sepet temizlenmeli (veya kullanıcıya onay sorulmalı)
 
 ---
+
+✅ TAMAMLANDI
 
 ### 5.1. GET `/api/v1/cart` - Sepeti Görüntüle
 
@@ -790,6 +792,11 @@ Authorization: Bearer <access_token>
 - Eğer ürün stokta yoksa veya kaldırılmışsa, frontend'e bilgi verilmeli
 
 ---
+
+✅ TAMAMLANDI
+TODO: Git push yapildi Code Review yapilip fixlemeler yapilacak daha sonra githup merge yapilip branch main olarak
+degistirilecek
+16.12.2025 03.10
 
 ### 5.2. POST `/api/v1/cart/items` - Sepete Ürün Ekle
 
@@ -1714,16 +1721,16 @@ npm run test:cov
 
 ## 📞 İletişim & Destek
 
-**Backend Geliştirici:** [İsim]  
-**Email:** backend@example.com  
-**API Base URL (Dev):** http://localhost:3000/api/v1  
-**API Base URL (Prod):** https://api.yemekyemek.com/api/v1  
+**Backend Geliştirici:** [İsim]
+**Email:** backend@example.com
+**API Base URL (Dev):** http://localhost:3000/api/v1
+**API Base URL (Prod):** https://api.yemekyemek.com/api/v1
 **Swagger Docs:** https://api.yemekyemek.com/api/docs
 
 ---
 
-**Son Güncelleme:** 07 Aralık 2025  
-**API Versiyonu:** v1.0.0  
+**Son Güncelleme:** 07 Aralık 2025
+**API Versiyonu:** v1.0.0
 **Doküman Versiyonu:** 1.0
 
 ---
