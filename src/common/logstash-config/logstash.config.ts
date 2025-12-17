@@ -22,6 +22,11 @@ export class LogstashTransport extends Transport {
   }
 
   private connect() {
+    if (this.client) {
+      this.client.removeAllListeners();
+      this.client.destroy();
+    }
+
     this.client = new net.Socket();
     this.connected = false;
 
@@ -46,7 +51,11 @@ export class LogstashTransport extends Transport {
       while (this.buffer.length > 0) {
         const log = this.buffer.shift();
         if (log) {
-          this.client.write(log);
+          this.client.write(log, (err) => {
+            if (err) {
+              console.log(`Logstash write hatasi: ${err.message}`);
+            }
+          });
         }
       }
     });
@@ -64,7 +73,15 @@ export class LogstashTransport extends Transport {
     if (this.client && !this.client.destroyed && this.connected) {
       // Bağlantı varsa hemen gönder
       console.log("[DEBUG] Logstash'e log gönderiliyor:", info.message);
-      this.client.write(logEntry);
+      this.client.write(logEntry, (err) => {
+        if (err) {
+          console.log(`Logstash write hatasi: ${err.message}`);
+
+          if (this.buffer.length < 100) {
+            this.buffer.push(logEntry);
+          }
+        }
+      });
     } else {
       // Bağlantı yoksa buffer'a ekle (ilk 100 log)
       console.log(
@@ -80,5 +97,33 @@ export class LogstashTransport extends Transport {
     }
 
     callback();
+  }
+
+  // Override Winston Transport's close method for proper cleanup on shutdown
+  close() {
+    // Handle idempotency - safe to call multiple times
+    if (!this.client) {
+      return;
+    }
+
+    try {
+      // Remove all listeners to prevent memory leaks
+      this.client.removeAllListeners();
+
+      // Destroy the socket connection
+      if (!this.client.destroyed) {
+        this.client.destroy();
+      }
+
+      // Reset connection state
+      this.connected = false;
+
+      // Clear the buffer
+      this.buffer = [];
+
+      console.log('Logstash transport closed successfully');
+    } catch (err) {
+      console.error('Error closing Logstash transport:', err);
+    }
   }
 }

@@ -23,3 +23,8 @@ async function bootstrap() {
 }
 
 void bootstrap();
+
+bootstrap().catch((error) => {
+  console.log(`Failed to bootstrap application: ${error}`);
+  process.exit(1);
+});
