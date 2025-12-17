@@ -29,12 +29,12 @@ export class CartService {
 
     const itemsCount = cartItems.length;
     const subtotal = cartItems.reduce((sum, item) => {
-      return sum + item.menuItem.price * item.quantity;
+      return sum + (item.menuItem?.price ?? 0) * item.quantity;
     }, 0);
 
     // Sepet boşsa deliveryFee 0, değilse ilk ürünün restoranından al
     const deliveryFee =
-      cartItems.length > 0 ? cartItems[0].restaurant.deliveryFee : 0;
+      cartItems.length > 0 ? (cartItems[0].restaurant?.deliveryFee ?? 0) : 0;
 
     const returnData = {
       statusCode: 200,
@@ -85,7 +85,10 @@ export class CartService {
         };
       }
 
-      const newCartItem = this.cartItemRepo.create(data);
+      const newCartItem = this.cartItemRepo.create({
+        ...data,
+        restaurant: menuItem.restaurant,
+      });
       await this.cartItemRepo.save(newCartItem);
       return {
         statusCode: 201,

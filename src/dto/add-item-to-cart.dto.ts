@@ -1,9 +1,10 @@
-import { IsString } from 'class-validator';
+import { IsInt, IsString, Min } from 'class-validator';
 
 export class AddItemToCartDto {
   @IsString()
   menuItemId: string;
 
-  @IsString()
+  @IsInt()
+  @Min(1)
   quantity: number;
 }

@@ -793,6 +793,11 @@ Authorization: Bearer <access_token>
 
 ---
 
+✅ TAMAMLANDI
+TODO: Git push yapildi Code Review yapilip fixlemeler yapilacak daha sonra githup merge yapilip branch main olarak
+degistirilecek
+16.12.2025 03.10
+
 ### 5.2. POST `/api/v1/cart/items` - Sepete Ürün Ekle
 
 **Request:**
