@@ -114,5 +114,48 @@ export class CartService {
         },
       };
     }
+
+    // Handle empty cart case
+    const menuItem = await this.menuItemRepo.findOne({
+      where: { id: data.menuItemId },
+      relations: ['restaurant'],
+    });
+
+    if (!menuItem) {
+      throw new NotFoundException('Menu item not found');
+    }
+
+    const newCartItem = this.cartItemRepo.create({
+      ...data,
+      restaurant: menuItem.restaurant,
+    });
+    const savedCartItem = await this.cartItemRepo.save(newCartItem);
+
+    const itemTotal = menuItem.price * data.quantity;
+    const total = itemTotal;
+
+    return {
+      statusCode: 201,
+      message: 'Urun sepete eklendi',
+      data: {
+        restaurant: {
+          id: menuItem.restaurant.id,
+          name: menuItem.restaurant.name,
+        },
+        items: [
+          {
+            id: savedCartItem.id,
+            menuItemId: {
+              id: menuItem.id,
+              name: menuItem.name,
+              price: menuItem.price,
+            },
+            quantity: savedCartItem.quantity,
+            itemTotal: itemTotal,
+          },
+        ],
+        total: total,
+      },
+    };
   }
 }

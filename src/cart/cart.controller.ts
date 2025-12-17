@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { CartService } from './cart.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/decarators/current-user.decorator';
@@ -21,5 +28,10 @@ export class CartController {
     @Body() data: AddItemToCartDto,
   ) {
     return await this.cartService.addItemToCart(user.id, data);
+  }
+
+  @Post('test-cart')
+  testCart() {
+    throw new NotFoundException('Menu item not found');
   }
 }

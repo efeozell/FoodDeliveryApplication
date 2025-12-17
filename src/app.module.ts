@@ -7,9 +7,12 @@ import { RedisModule } from '@nestjs-modules/ioredis';
 import { RestaurantsModule } from './restaurants/restaurants.module';
 import { OrderModule } from './order/order.module';
 import { CartModule } from './cart/cart.module';
+import { WinstonModule } from 'nest-winston';
+import { winstonConfig } from './common/logger/winston.config';
 
 @Module({
   imports: [
+    WinstonModule.forRoot(winstonConfig),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
