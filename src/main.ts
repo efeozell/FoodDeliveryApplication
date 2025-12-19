@@ -1,9 +1,10 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
-import { Logger, VersioningType } from '@nestjs/common';
+import { VersioningType } from '@nestjs/common';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,8 +22,6 @@ async function bootstrap() {
   });
   await app.listen(process.env.PORT ?? 3000);
 }
-
-void bootstrap();
 
 bootstrap().catch((error) => {
   console.log(`Failed to bootstrap application: ${error}`);

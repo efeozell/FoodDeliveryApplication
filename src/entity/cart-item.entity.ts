@@ -19,7 +19,11 @@ export class CartItem {
   id: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE', nullable: false })
+  @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @Column({ type: 'uuid' })
+  menuItemId: string;
 
   @ManyToOne(() => MenuItem, {
     onDelete: 'CASCADE',
