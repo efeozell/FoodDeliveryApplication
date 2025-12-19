@@ -18,8 +18,14 @@ export class CartItem {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ type: 'uuid' })
+  userId: string;
+
   @ManyToOne(() => User, { onDelete: 'CASCADE', nullable: false })
   user: User;
+
+  @Column({ type: 'uuid' })
+  menuItemId: string;
 
   @ManyToOne(() => MenuItem, {
     onDelete: 'CASCADE',

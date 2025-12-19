@@ -5,9 +5,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { CurrentUser } from 'src/auth/decarators/current-user.decorator';
 import { AddItemToCartDto } from 'src/dto/add-item-to-cart.dto';
 import { CartItem } from 'src/entity/cart-item.entity';
 import { MenuItem } from 'src/entity/menu_items.entity';
+import { User } from 'src/entity/user.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -53,14 +55,29 @@ export class CartService {
     return returnData;
   }
 
-  async addItemToCart(userId: string, data: AddItemToCartDto) {
+  async addItemToCart(
+    userId: string,
+    data: AddItemToCartDto,
+    clearCart?: string,
+  ) {
     const existingCartItem = await this.cartItemRepo
       .createQueryBuilder('cart_item')
       .leftJoinAndSelect('cart_item.restaurant', 'restaurant')
       .leftJoinAndSelect('cart_item.menuItem', 'menuItem')
       .where('cart_item.userId = :userId', { userId })
       .getOne();
-    //Eger kullaniciya ait bir sepet varse ve eger bu sepetteki urun eklenecek urunun
+    //Eger kullaniciya ait bir sepet varse ve eger bu sepetteki urun eklenecek urun ile ayni restorana ait
+    //degilse hata eger aitse sepete yeni bir urun olarak ekleniyor eger ayni urunsa adet guncelleniyor
+
+    //Query'den gelen clearCart parametresi true ise kullanici sepeti temizlenir ve eklemek istedigi farkli restaronn urunu eklenir
+    if (clearCart && clearCart === 'true') {
+      await this.cartItemRepo
+        .createQueryBuilder()
+        .delete()
+        .where('userId = :userId', { userId })
+        .execute();
+    }
+
     if (existingCartItem) {
       const menuItem = await this.menuItemRepo.findOne({
         where: { id: data.menuItemId },
@@ -72,8 +89,9 @@ export class CartService {
       }
 
       if (existingCartItem.restaurant.id !== menuItem?.restaurant.id) {
+        //Buraya hata firlaticaz frontende tarafinda kullaniciya sepetteki urunleri silmek istediginize emin misiniz diye sorulucak eger bize tekrardan POST /cart/items?clearCart=true istek tekrar edilirse sepet temizlenip yeni urun eklenecek.
         throw new BadRequestException(
-          'Sepetinizde farkli bir restorana ait bir urun varken bu restorandan urun ekleyemezsiniz.',
+          'Sepetinizde farkli bir restorana ait bir urun varken bu restorandan urun ekleyemezsiniz.Kullaniciya sepeti temizleyip yenu urunu eklemek istediginize emin misiniz diye sorunuz. Eger emin ise istegi /cart/items?clearCart=true seklinde tekrar gonderiniz.',
         );
       }
 
@@ -87,7 +105,9 @@ export class CartService {
 
       const newCartItem = this.cartItemRepo.create({
         ...data,
+        userId,
         restaurant: menuItem.restaurant,
+        menuItemId: menuItem.id,
       });
       await this.cartItemRepo.save(newCartItem);
       return {
@@ -115,7 +135,7 @@ export class CartService {
       };
     }
 
-    // Handle empty cart case
+    //Eger sepet yoksa yeni sepet olusturup urunu kaydediyoruz
     const menuItem = await this.menuItemRepo.findOne({
       where: { id: data.menuItemId },
       relations: ['restaurant'],
@@ -127,6 +147,7 @@ export class CartService {
 
     const newCartItem = this.cartItemRepo.create({
       ...data,
+      userId,
       restaurant: menuItem.restaurant,
     });
     const savedCartItem = await this.cartItemRepo.save(newCartItem);
@@ -156,6 +177,74 @@ export class CartService {
         ],
         total: total,
       },
+    };
+  }
+
+  async updateCartItemQuantity(
+    userId: string,
+    cartItemId: string,
+    quantity: number,
+  ) {
+    const cartItem = await this.cartItemRepo.findOne({
+      where: { id: cartItemId, userId },
+    });
+
+    if (!cartItem) {
+      throw new NotFoundException('Cart item not found');
+    }
+
+    if (quantity <= 0) {
+      throw new BadRequestException('Quantity must be greater than zero');
+    }
+
+    if (quantity == 0) {
+      await this.cartItemRepo.remove(cartItem);
+    }
+
+    cartItem.quantity += 1;
+
+    const savedData = await this.cartItemRepo.save(cartItem);
+
+    return {
+      statusCode: 200,
+      message: 'Cart item quantity updated',
+      data: {
+        savedData,
+      },
+    };
+  }
+
+  async deleteMenuItemFromCart(userId: string, cartItemId: string) {
+    const cartItem = await this.cartItemRepo.findOne({
+      where: { id: cartItemId, userId },
+    });
+
+    if (!cartItem) {
+      throw new NotFoundException('Cart item not found');
+    }
+
+    await this.cartItemRepo
+      .createQueryBuilder()
+      .delete()
+      .where('id = :id', { id: cartItem.id })
+      .execute();
+
+    return {
+      statusCode: 200,
+      message: 'Cart item deleted successfully',
+    };
+  }
+
+  async clearCart(userId: string) {
+    await this.cartItemRepo
+      .createQueryBuilder()
+      .delete()
+      .where('userId = :userId', { userId })
+      .execute();
+
+    return {
+      statusCode: 200,
+      message: 'Sepetiniz basariyla temizlendi',
     };
   }
 }

@@ -32,19 +32,19 @@ export class LogstashTransport extends Transport {
 
     // Bağlantı hatası olursa uygulamayı çökertme, sadece logla
     this.client.on('error', (err) => {
-      console.error(`Logstash bağlantı hatası: ${err.message}`);
+      // console.error(`Logstash bağlantı hatası: ${err.message}`);
       this.connected = false;
     });
 
     // Bağlantı koparsa yeniden bağlanmaya çalışabilirsin (opsiyonel)
     this.client.on('close', () => {
-      console.warn('Logstash bağlantısı koptu.');
+      // console.warn('Logstash bağlantısı koptu.');
       this.connected = false;
       // setTimeout(() => this.connect(), 5000); // İstersen 5sn sonra tekrar dene
     });
 
     this.client.connect(this.port, this.host, () => {
-      console.log(`Logstash'e bağlandı: ${this.host}:${this.port} 🚀`);
+      // console.log(`Logstash'e bağlandı: ${this.host}:${this.port} 🚀`);
       this.connected = true;
 
       // Buffer'daki bekleyen logları gönder
@@ -72,10 +72,10 @@ export class LogstashTransport extends Transport {
 
     if (this.client && !this.client.destroyed && this.connected) {
       // Bağlantı varsa hemen gönder
-      console.log("[DEBUG] Logstash'e log gönderiliyor:", info.message);
+      // console.log("[DEBUG] Logstash'e log gönderiliyor:", info.message);
       this.client.write(logEntry, (err) => {
         if (err) {
-          console.log(`Logstash write hatasi: ${err.message}`);
+          // console.log(`Logstash write hatasi: ${err.message}`);
 
           if (this.buffer.length < 100) {
             this.buffer.push(logEntry);
@@ -84,13 +84,13 @@ export class LogstashTransport extends Transport {
       });
     } else {
       // Bağlantı yoksa buffer'a ekle (ilk 100 log)
-      console.log(
-        "[DEBUG] Buffer'a eklendi (connected:",
-        this.connected,
-        ', destroyed:',
-        this.client?.destroyed,
-        ')',
-      );
+      // console.log(
+      //   "[DEBUG] Buffer'a eklendi (connected:",
+      //   this.connected,
+      //   ', destroyed:',
+      //   this.client?.destroyed,
+      //   ')',
+      // );
       if (this.buffer.length < 100) {
         this.buffer.push(logEntry);
       }
