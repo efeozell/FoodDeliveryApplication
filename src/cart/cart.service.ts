@@ -193,7 +193,7 @@ export class CartService {
       throw new NotFoundException('Cart item not found');
     }
 
-    if (quantity <= 0) {
+    if (quantity < 0) {
       throw new BadRequestException('Quantity must be greater than zero');
     }
 

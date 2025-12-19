@@ -11,7 +11,7 @@ export const winstonConfig = {
   ),
   transports: [
     new transports.Console({
-      level: process.env.LOG_LEVEL || 'debug', // Tüm logları terminale bas
+      level: process.env.LOG_LEVEL || 'info', // Tüm logları terminale bas
       format: format.combine(
         format.colorize(),
         format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
