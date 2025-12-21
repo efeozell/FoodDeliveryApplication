@@ -61,7 +61,7 @@ export class CartController {
     return await this.cartService.deleteMenuItemFromCart(user.id, itemId);
   }
 
-  @Delete('/cart')
+  @Delete('/')
   async clearCart(@CurrentUser() user: User) {
     return await this.cartService.clearCart(user.id);
   }

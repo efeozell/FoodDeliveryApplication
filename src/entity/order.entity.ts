@@ -17,6 +17,7 @@ export enum OrderStatus {
   ON_THE_WAY = 'on_the_way',
   DELIVIRED = 'delivired',
   CANCELLED = 'cancelled',
+  PAID = 'paid',
 }
 
 @Entity('orders')
@@ -59,6 +60,17 @@ export class Order {
 
   @Column({ type: 'text', nullable: true })
   note: string;
+
+  //Iyzicodan donen islem numarasi ilk basta null olucak
+  @Column({ nullable: true })
+  iyzicoPaymentId: string;
+
+  //Hangi ip'den siparis verildigi guvenlik kontrolleri icin
+  @Column({ nullable: true })
+  ipAdress: string;
+
+  @Column({ type: 'json', nullable: true })
+  basketItems: any;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

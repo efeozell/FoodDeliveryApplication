@@ -25,7 +25,8 @@ export class CartService {
     const cartItems = await this.cartItemRepo
       .createQueryBuilder('cart_item')
       .leftJoinAndSelect('cart_item.menuItem', 'menu_item')
-      .leftJoinAndSelect('cart_item.restaurant', 'restaurant')
+      .leftJoinAndSelect('menu_item.restaurant', 'restaurant')
+      .leftJoinAndSelect('menu_item.category', 'category')
       .where('cart_item.userId = :userId', { userId })
       .getMany();
 
@@ -36,7 +37,9 @@ export class CartService {
 
     // Sepet boşsa deliveryFee 0, değilse ilk ürünün restoranından al
     const deliveryFee =
-      cartItems.length > 0 ? (cartItems[0].restaurant?.deliveryFee ?? 0) : 0;
+      cartItems.length > 0
+        ? (cartItems[0].menuItem?.restaurant?.deliveryFee ?? 0)
+        : 0;
 
     const returnData = {
       statusCode: 200,

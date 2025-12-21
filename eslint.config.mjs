@@ -26,6 +26,7 @@ export default tseslint.config(
   },
   {
     rules: {
+      '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',

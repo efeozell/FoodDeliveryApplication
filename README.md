@@ -356,7 +356,7 @@ Authorization: Bearer <access_token>
 ### **Performans Hedefleri:**
 
 - ✅ Liste response < 200ms
-- ✅ Cache kullanımı (Redis önerilir)
+- ✅ Cache kullanımı (Redis önerilir) Kullanildi
 - ✅ Resim upload max 2MB
 - ✅ Read-Heavy yapı için optimizasyon
 
@@ -526,7 +526,10 @@ GET /api/v1/restaurants?page=1&limit=20&city=Istanbul&minRating=4.0
   - `isAvailable`: Ürün satışta mı (boolean)
   - `inStock`: Stokta var mı (boolean)
   - `image`: Tam URL
-- **Cache:** Bu endpoint mutlaka cache'lenmeli (Redis, 5-10 dakika TTL)
+    TODO: Restaurant cachlenecek eger restorant cachede yoksa 5-10 dakika cachede tutulacak varsa cache'den
+    cekilecek. Restoran bilgileri sik degismedigi icin uzun sure tutmak mantikli olur
+    Bilgileri redis'te 15 tutsak daha mantikli olabilir
+- **Cache:** Bu endpoint mutlaka cache'lenmeli (Redis, 5-10 dakika TTL)✅
 - **Performans:** < 200ms response time
 
 ---
@@ -931,6 +934,11 @@ Authorization: Bearer <access_token>
 ```
 
 ---
+
+TODO: Bu kisim stripe veya farkli bir odeme yontemiyle entegre sekilde yapilacak. Webhook ile birlikte
+Kullanici sepeti ile birlikte siparis olusturmak istediginde stripe'in verdigi url ile birlikte kullanici
+stripe tarafina iletilecek oradan gelen cevaba gore siparis olusturulacak veya olusturulmayacak.
+Bunu implemente edicez.
 
 ## 📦 6. Sipariş (Order) Yaşam Döngüsü - KRİTİK BÖLÜM
 
