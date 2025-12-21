@@ -59,6 +59,15 @@ export class OrderController {
     }
 
     const restaurantId = firstCartItem.menuItem.restaurant.id;
+    const allFromSameRestaurant = cartData.data.cartItems.every(
+      (item) => item.menuItem?.restaurant?.id === restaurantId,
+    );
+
+    if (!allFromSameRestaurant) {
+      throw new BadRequestException(
+        'Sepetteki urunler farkli restoranlara ait olamaz',
+      );
+    }
 
     const orderData = {
       subtotalAmount: cartData.subtotal,
@@ -92,12 +101,13 @@ export class OrderController {
     try {
       const result = await this.orderService.completePayment(body.token);
 
+      //TODO: Frontend adresi .env'den alinacak
       return res.redirect(
         `http://localhost:3000/test-mock/success?orderId=${result.orderId}`,
       );
     } catch (error) {
       return res.redirect(
-        `http://localhost:3000/test-mock/success?orderId=${error.message}`,
+        `http://localhost:3000/test-mock/error?orderId=${error.message}`,
       );
     }
   }

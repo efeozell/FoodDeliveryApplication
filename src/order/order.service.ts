@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Order, OrderStatus } from 'src/entity/order.entity';
 import { User } from 'src/entity/user.entity';
@@ -6,12 +10,14 @@ import { IyzicoService } from 'src/iyzico-service/iyzico-service.service';
 import { Repository } from 'typeorm';
 import Iyzipay = require('iyzipay');
 import { request } from 'http';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class OrderService {
   constructor(
     @InjectRepository(Order) private orderRepo: Repository<Order>,
     private iyzicoService: IyzicoService,
+    private configService: ConfigService,
   ) {}
 
   //Sepet verilerini alip siparisi startPaymentProcess ile baslatir ve html icerigi dondurur
@@ -69,8 +75,7 @@ export class OrderService {
       currency: Iyzipay.CURRENCY.TRY,
       basketId: savedOrder.id.toString(),
       paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
-      callbackUrl:
-        'https://emma-uncontributed-kurtis.ngrok-free.dev/v1/order/callback',
+      callbackUrl: this.configService.get<string>('IYZICO_CALLBACK_URL'),
       enabledInstallments: [1, 2, 3, 6, 9],
       buyer: {
         id: user.id.toString(),
@@ -78,6 +83,8 @@ export class OrderService {
         surname: user.name.split(' ')[1] || user.name,
         gsmNumber: user.email,
         email: user.email,
+        //TODO: Development ortaminda olusturuldugu icin sabit degerler kullanildi
+        // -gsmNumber, -identityNumver, lastLoginDate
         identityNumber: '11111111111',
         lastLoginDate: '2024-01-01 12:00:00',
         registrationAddress: user.address || 'N/A',
@@ -117,7 +124,7 @@ export class OrderService {
     const result = await this.iyzicoService.getPaymentResult(token);
 
     if (result.status !== 'success' || result.paymentStatus !== 'SUCCESS') {
-      throw new Error('Odeme basarisiz veya onaylanmadi');
+      throw new BadRequestException('Odeme basarisiz veya onaylanmadi');
     }
 
     const orderId = result.conversationId || result.basketId;
@@ -125,7 +132,7 @@ export class OrderService {
     const order = await this.orderRepo.findOne({ where: { id: orderId } });
 
     if (!order) {
-      throw new Error('Siparis bulunamadi');
+      throw new NotFoundException('Siparis bulunamadi');
     }
 
     if (order.status === OrderStatus.PAID) {
@@ -140,7 +147,7 @@ export class OrderService {
 
     const difference = Math.abs(paidAmount - orderAmount);
     if (difference > 0.01) {
-      throw new Error(
+      throw new BadRequestException(
         `Tutar uyusmazligi - Beklenen: ${orderAmount} TL, Gelen: ${paidAmount} TL`,
       );
     }

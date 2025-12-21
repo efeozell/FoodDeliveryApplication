@@ -129,11 +129,15 @@ export class UserService {
     const { page = 1, limit = 10, status, sort } = queryDto;
 
     // Cache key'ini query parametreleriyle birlikte olustur
-    const cacheKey = `user:${user.id}:orders:page:${page}:limit:${limit}:status:${status || 'all'}:sort:${sort || 'createdAt:DESC'}`;
+    const cacheKey = `user:${user.id}:orders:page:${page}:limit:${limit}:status:${status ?? 'all'}:sort:${sort ?? 'createdAt:DESC'}`;
 
-    const cachedData = await this.redis.get(cacheKey);
-    if (cachedData) {
-      return JSON.parse(cachedData) as PaginatedOrders;
+    try {
+      const cachedData = await this.redis.get(cacheKey);
+      if (cachedData) {
+        return JSON.parse(cachedData) as PaginatedOrders;
+      }
+    } catch (error) {
+      console.log('Redis get errot: ', error);
     }
 
     const queryBuilder = this.orderRepo
