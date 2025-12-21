@@ -9,6 +9,8 @@ import { OrderModule } from './order/order.module';
 import { CartModule } from './cart/cart.module';
 import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from './common/logger/winston.config';
+import { IyzicoService } from './iyzico-service/iyzico-service.service';
+import { TestMockController } from './test-mock/test-mock.controller';
 
 @Module({
   imports: [
@@ -44,7 +46,7 @@ import { winstonConfig } from './common/logger/winston.config';
     OrderModule,
     CartModule,
   ],
-  controllers: [],
-  providers: [],
+  controllers: [TestMockController],
+  providers: [IyzicoService],
 })
 export class AppModule {}

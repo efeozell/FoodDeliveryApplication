@@ -12,6 +12,8 @@ import bcrypt from 'bcrypt';
 import { UpdateUserDto } from 'src/dto/update.user.dto';
 import { Order } from 'src/entity/order.entity';
 import { OrderQueryDto } from 'src/dto/order-query.dto';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import Redis from 'ioredis';
 
 interface PaginatedOrders {
   orders: Order[];
@@ -30,6 +32,7 @@ export class UserService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(Order)
     private readonly orderRepo: Repository<Order>,
+    @InjectRedis() private readonly redis: Redis,
   ) {}
 
   async createUser(createUserDto: RegisterDto): Promise<User> {
@@ -125,6 +128,14 @@ export class UserService {
   ): Promise<PaginatedOrders> {
     const { page = 1, limit = 10, status, sort } = queryDto;
 
+    // Cache key'ini query parametreleriyle birlikte olustur
+    const cacheKey = `user:${user.id}:orders:page:${page}:limit:${limit}:status:${status || 'all'}:sort:${sort || 'createdAt:DESC'}`;
+
+    const cachedData = await this.redis.get(cacheKey);
+    if (cachedData) {
+      return JSON.parse(cachedData) as PaginatedOrders;
+    }
+
     const queryBuilder = this.orderRepo
       .createQueryBuilder('order') //order tablosunda bir query builder baslat
       .leftJoinAndSelect('order.restaurant', 'restaurant') //order tablosuyla restaurant tablosunu birlestir
@@ -157,7 +168,7 @@ export class UserService {
 
     const totalPages = Math.ceil(totalItems / limit);
 
-    return {
+    const result: PaginatedOrders = {
       orders,
       pagination: {
         currentPage: page,
@@ -166,5 +177,10 @@ export class UserService {
         itemsPerPage: limit,
       },
     };
+
+    // Tum sonucu (orders + pagination) cache'e at
+    await this.redis.set(cacheKey, JSON.stringify(result), 'EX', 300); //5 dakika cachele
+
+    return result;
   }
 }

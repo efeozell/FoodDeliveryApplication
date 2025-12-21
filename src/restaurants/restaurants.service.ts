@@ -16,6 +16,8 @@ import { CreateRestaurantDto } from 'src/dto/create-restaurant.dto';
 import { UpdateRestaurantDto } from 'src/dto/update-restaurant.dto';
 import { CreateMenuItemsDto } from 'src/dto/create-menu-items.dto';
 import { SearchDto, SearchType } from 'src/dto/search.dto';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import Redis from 'ioredis';
 
 @UseGuards(JwtAuthGuard)
 @Injectable()
@@ -25,6 +27,7 @@ export class RestaurantsService {
     private readonly restaurantRepo: Repository<Restaurant>,
     @InjectRepository(MenuItem)
     private readonly menuItemRepo: Repository<MenuItem>,
+    @InjectRedis() private readonly redis: Redis,
   ) {}
 
   async getRestaurants(user: User, restaurantQueryDto: RestaurantQueryDto) {
@@ -137,6 +140,31 @@ export class RestaurantsService {
         select: ['id', 'name'],
       });
 
+      const cacheKey = `restaurant_menu_${id}`;
+      const cachedMenu = await this.redis.get(cacheKey);
+
+      if (cachedMenu) {
+        return JSON.parse(cachedMenu) as {
+          statusCode: number;
+          data: {
+            restaurant: { id: string; name: string };
+            categories: Array<{
+              id: string;
+              name: string;
+              items: Array<{
+                id: string;
+                name: string;
+                description: string;
+                price: number;
+                image: string;
+                isAvailable: boolean;
+                inStock: boolean;
+              }>;
+            }>;
+          };
+        };
+      }
+
       if (!restaurant) {
         throw new NotFoundException('Restoran bulunamadi');
       }
@@ -151,6 +179,34 @@ export class RestaurantsService {
           restaurantId: id,
         })
         .getMany();
+
+      await this.redis.set(
+        cacheKey,
+        JSON.stringify({
+          statusCode: 200,
+          data: {
+            restaurant: {
+              id: restaurant.id,
+              name: restaurant.name,
+            },
+            categories: categories.map((category: any) => ({
+              id: category.id,
+              name: category.name,
+              items: category.menuItems.map((item: any) => ({
+                id: item.id,
+                name: item.name,
+                description: item.description,
+                price: Number(item.price),
+                image: item.imageUrl,
+                isAvailable: item.isAvaiable,
+                inStock: item.isAvaiable,
+              })),
+            })),
+          },
+        }),
+        'EX',
+        3600, // 1 saatlik önbellekleme
+      );
 
       return {
         statusCode: 200,
