@@ -11,11 +11,13 @@ import { Repository } from 'typeorm';
 import Iyzipay = require('iyzipay');
 import { request } from 'http';
 import { ConfigService } from '@nestjs/config';
+import { CartItem } from 'src/entity/cart-item.entity';
 
 @Injectable()
 export class OrderService {
   constructor(
     @InjectRepository(Order) private orderRepo: Repository<Order>,
+    @InjectRepository(CartItem) private cartItemRepo: Repository<CartItem>,
     private iyzicoService: IyzicoService,
     private configService: ConfigService,
   ) {}
@@ -120,7 +122,7 @@ export class OrderService {
   }
 
   //Odeme tamamlandiktan sonra gelen token ile odeme sonucunu alir ve siparisi gunceller kontrol eder.
-  async completePayment(token: string) {
+  async completePayment(token: string, user: User) {
     const result = await this.iyzicoService.getPaymentResult(token);
 
     if (result.status !== 'success' || result.paymentStatus !== 'SUCCESS') {
@@ -152,9 +154,17 @@ export class OrderService {
       );
     }
 
+    // Ödeme başarılı, order'ı güncelle
     order.status = OrderStatus.PAID;
     order.iyzicoPaymentId = result.paymentId;
     await this.orderRepo.save(order);
+
+    // Kullanıcının sepetini temizle
+    await this.cartItemRepo
+      .createQueryBuilder()
+      .delete()
+      .where('userId = :userId', { userId: user.id })
+      .execute();
 
     return { orderId: order.id };
   }
