@@ -77,7 +77,7 @@ export class OrderService {
       currency: Iyzipay.CURRENCY.TRY,
       basketId: savedOrder.id.toString(),
       paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
-      callbackUrl: this.configService.get<string>('CALLBACK_URL') || '',
+      callbackUrl: this.configService.getOrThrow<string>('CALLBACK_URL') || '',
       enabledInstallments: [1, 2, 3, 6, 9],
       buyer: {
         id: user.id.toString(),
@@ -198,12 +198,12 @@ export class OrderService {
         totalPrice: item.totalPrice,
       })),
       subtotal: order.totalAmount,
-      deliveryFee: order.restaurant.deliveryFee,
-      total: order.totalAmount + order.restaurant.deliveryFee,
+      deliveryFee: order.restaurant?.deliveryFee ?? 0,
+      total: order.totalAmount + (order.restaurant.deliveryFee ?? 0),
       status: order.status,
       deliveryAddress: order.deliveryAddress,
       note: order.note,
-      devileryedAt: order.deliveredAt || null,
+      devileredAt: order.deliveredAt || null,
       createdAt: order.createdAt,
     };
   }
