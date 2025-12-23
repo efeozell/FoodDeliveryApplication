@@ -526,7 +526,7 @@ GET /api/v1/restaurants?page=1&limit=20&city=Istanbul&minRating=4.0
   - `isAvailable`: Ürün satışta mı (boolean)
   - `inStock`: Stokta var mı (boolean)
   - `image`: Tam URL
-    TODO: Restaurant cachlenecek eger restorant cachede yoksa 5-10 dakika cachede tutulacak varsa cache'den
+    ✅ TODO: Restaurant cachlenecek eger restorant cachede yoksa 5-10 dakika cachede tutulacak varsa cache'den
     cekilecek. Restoran bilgileri sik degismedigi icin uzun sure tutmak mantikli olur
     Bilgileri redis'te 15 tutsak daha mantikli olabilir
 - **Cache:** Bu endpoint mutlaka cache'lenmeli (Redis, 5-10 dakika TTL)✅
@@ -646,7 +646,7 @@ GET /api/v1/restaurants?page=1&limit=20&city=Istanbul&minRating=4.0
 
 ---
 
-//TODO: Burada kaldik
+//✅ TODO: Burada kaldik
 //Bu endpoint tamamlandi ama bazi onlemler eklenicek
 ✅ TAMAMLANDI
 
@@ -935,7 +935,7 @@ Authorization: Bearer <access_token>
 
 ---
 
-TODO: Bu kisim stripe veya farkli bir odeme yontemiyle entegre sekilde yapilacak. Webhook ile birlikte
+✅ TODO: Bu kisim stripe veya farkli bir odeme yontemiyle entegre sekilde yapilacak. Webhook ile birlikte
 Kullanici sepeti ile birlikte siparis olusturmak istediginde stripe'in verdigi url ile birlikte kullanici
 stripe tarafina iletilecek oradan gelen cevaba gore siparis olusturulacak veya olusturulmayacak.
 Bunu implemente edicez.
@@ -950,6 +950,8 @@ Bunu implemente edicez.
 - ✅ **Stok Tutarlılığı:** Sipariş anında fiyat ve stok kontrolü
 
 ---
+
+✅ TAMAMLANDI
 
 ### 6.1. POST `/api/v1/orders` - Sipariş Oluştur
 
@@ -1101,6 +1103,8 @@ Response 201 Created
 
 ---
 
+✅ TAMAMLANDI
+
 ### 6.2. GET `/api/v1/orders/:id` - Sipariş Detayı
 
 **Response (200 OK):**
@@ -1175,6 +1179,8 @@ enum OrderStatus {
 ```
 
 ---
+
+//TODO: Burada kaldik
 
 ### 6.4. PATCH `/api/v1/orders/:id/status` - Durum Güncelle (Admin/Restoran)
 

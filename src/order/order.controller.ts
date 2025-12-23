@@ -2,9 +2,12 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
   HttpCode,
   Ip,
+  Param,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -58,6 +61,7 @@ export class OrderController {
       throw new BadRequestException('Restaurant bilgisi eksik');
     }
 
+    //TODO: yeni set olusturup tum restaurant id'lerini kontrol et daha efektif
     const restaurantId = firstCartItem.menuItem.restaurant.id;
     const allFromSameRestaurant = cartData.data.cartItems.every(
       (item) => item.menuItem?.restaurant?.id === restaurantId,
@@ -107,8 +111,17 @@ export class OrderController {
       );
     } catch (error) {
       return res.redirect(
-        `http://localhost:3000/test-mock/error?orderId=${error.message}`,
+        `http://localhost:3000/test-mock/fail?reason=${encodeURIComponent(error.message)}`,
       );
     }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/:orderId')
+  async getOrderDetails(
+    @CurrentUser() user: User,
+    @Param('orderId') orderId: string,
+  ) {
+    return this.orderService.getOrderDetails(user, orderId);
   }
 }
