@@ -77,7 +77,7 @@ export class OrderService {
       currency: Iyzipay.CURRENCY.TRY,
       basketId: savedOrder.id.toString(),
       paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
-      callbackUrl: this.configService.get<string>('IYZICO_CALLBACK_URL'),
+      callbackUrl: this.configService.getOrThrow<string>('CALLBACK_URL') || '',
       enabledInstallments: [1, 2, 3, 6, 9],
       buyer: {
         id: user.id.toString(),
@@ -122,7 +122,7 @@ export class OrderService {
   }
 
   //Odeme tamamlandiktan sonra gelen token ile odeme sonucunu alir ve siparisi gunceller kontrol eder.
-  async completePayment(token: string, user: User) {
+  async completePayment(token: string) {
     const result = await this.iyzicoService.getPaymentResult(token);
 
     if (result.status !== 'success' || result.paymentStatus !== 'SUCCESS') {
@@ -155,17 +155,56 @@ export class OrderService {
     }
 
     // Ödeme başarılı, order'ı güncelle
-    order.status = OrderStatus.PAID;
-    order.iyzicoPaymentId = result.paymentId;
-    await this.orderRepo.save(order);
-
     // Kullanıcının sepetini temizle
-    await this.cartItemRepo
-      .createQueryBuilder()
-      .delete()
-      .where('userId = :userId', { userId: user.id })
-      .execute();
+    await this.orderRepo.manager.transaction(async (manager) => {
+      order.status = OrderStatus.PAID;
+      order.iyzicoPaymentId = result.paymentId;
+      await manager.save(order);
+
+      await manager.delete(CartItem, { userId: order.userId });
+    });
 
     return { orderId: order.id };
+  }
+
+  async getOrderDetails(userId: User, orderId: string) {
+    const order = await this.orderRepo
+      .createQueryBuilder('order')
+      .where('order.id = :orderId', { orderId })
+      .andWhere('order.userId = :userId', { userId: userId.id })
+      .leftJoinAndSelect('order.restaurant', 'restaurant')
+      .leftJoinAndSelect('order.orderItems', 'orderItems')
+      .getOne();
+
+    if (!order) {
+      throw new NotFoundException('Siparis bulunamadi');
+    }
+
+    return {
+      statusCode: 200,
+      data: {
+        id: order.id,
+        restaurant: {
+          id: order.restaurantId,
+          name: order.restaurant?.name || 'N/A',
+          phone: order.restaurant?.phone || 'N/A',
+          address: order.restaurant?.address || 'N/A',
+        },
+      },
+      items: order.orderItems.map((item) => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        totalPrice: item.totalPrice,
+      })),
+      subtotal: order.totalAmount,
+      deliveryFee: order.restaurant?.deliveryFee ?? 0,
+      total: order.totalAmount + (order.restaurant.deliveryFee ?? 0),
+      status: order.status,
+      deliveryAddress: order.deliveryAddress,
+      note: order.note,
+      devileredAt: order.deliveredAt || null,
+      createdAt: order.createdAt,
+    };
   }
 }
