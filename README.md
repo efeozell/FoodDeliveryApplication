@@ -1181,6 +1181,7 @@ enum OrderStatus {
 ---
 
 //TODO: Burada kaldik
+//Projeye aws s3 ekleniyor
 
 ### 6.4. PATCH `/api/v1/orders/:id/status` - Durum Güncelle (Admin/Restoran)
 

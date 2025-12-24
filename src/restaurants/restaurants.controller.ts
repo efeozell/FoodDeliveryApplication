@@ -3,15 +3,12 @@ import {
   Controller,
   Delete,
   Get,
-  HttpStatus,
   Param,
-  ParseFilePipeBuilder,
   Patch,
   Post,
   Query,
   UploadedFile,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { RestaurantsService } from './restaurants.service';
 import { RestaurantQueryDto } from 'src/dto/restraunt-query.dto';
@@ -23,8 +20,10 @@ import { Roles } from 'src/auth/decarators/roles.decorator';
 import { CreateRestaurantDto } from 'src/dto/create-restaurant.dto';
 import { UpdateRestaurantDto } from 'src/dto/update-restaurant.dto';
 import { CreateMenuItemsDto } from 'src/dto/create-menu-items.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { SearchDto } from 'src/dto/search.dto';
+import { S3Service } from 'src/common/services/s3/s3.service';
+import { UploadImage } from 'src/common/decorators/upload.decorator';
+import { ImageFilePipe } from 'src/common/pipes/image-validation.pipe';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller({
@@ -32,13 +31,26 @@ import { SearchDto } from 'src/dto/search.dto';
   version: '1',
 })
 export class RestaurantsController {
-  constructor(private readonly restaurantService: RestaurantsService) {}
+  constructor(
+    private readonly restaurantService: RestaurantsService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   @Roles(UserRole.ADMIN)
   @Post('/create')
-  async createRestaurant(@Body() createRestaurantDto: CreateRestaurantDto) {
+  @UploadImage('file')
+  async createRestaurant(
+    @Body() createRestaurantDto: CreateRestaurantDto,
+    @UploadedFile(ImageFilePipe(2)) file: Express.Multer.File,
+  ) {
     const restaurant =
       await this.restaurantService.createRestaurant(createRestaurantDto);
+
+    if (file) {
+      const uploadResult = await this.s3Service.uploadFile(file);
+      restaurant.image = uploadResult.url;
+      await this.restaurantService.saveRestaurant(restaurant);
+    }
 
     return {
       statusCode: 201,
@@ -50,24 +62,23 @@ export class RestaurantsController {
 
   @Roles(UserRole.ADMIN)
   @Post('/:id/menu-items')
-  @UseInterceptors(FileInterceptor('image'))
+  @UploadImage('image')
   async addMenuItems(
     @Param('id') id: string,
     @Body() createMenuItemsDto: CreateMenuItemsDto,
-    @UploadedFile(
-      new ParseFilePipeBuilder()
-        .addFileTypeValidator({
-          fileType: /(jpg|jpeg|png|gif)$/,
-        })
-        .addMaxSizeValidator({ maxSize: 1024 * 1024 * 2 })
-        .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY }),
-    )
-    file: Express.Multer.File,
+    @UploadedFile(ImageFilePipe(2)) file: Express.Multer.File,
   ) {
+    let imageUrl: string | undefined;
+
+    if (file) {
+      const uploadResult = await this.s3Service.uploadFile(file);
+      imageUrl = uploadResult.url;
+    }
+
     const menuItem = await this.restaurantService.addMenuItemsByRestaurantId(
       id,
       createMenuItemsDto,
-      file,
+      imageUrl,
     );
 
     return {
@@ -80,14 +91,22 @@ export class RestaurantsController {
 
   @Roles(UserRole.ADMIN)
   @Patch('/update/:id')
+  @UploadImage('updateRestaurantImage')
   async updateRestaurant(
     @Param('id') id: string,
     @Body() updateRestaurantDto: UpdateRestaurantDto,
+    @UploadedFile(ImageFilePipe(2)) file: Express.Multer.File,
   ) {
     const restaurant = await this.restaurantService.updateRestaurant(
       id,
       updateRestaurantDto,
     );
+
+    if (file) {
+      const uploadResult = await this.s3Service.uploadFile(file);
+      restaurant.image = uploadResult.url;
+      await this.restaurantService.saveRestaurant(restaurant);
+    }
 
     return restaurant;
   }
