@@ -1181,7 +1181,7 @@ enum OrderStatus {
 ---
 
 //TODO: Burada kaldik
-//Projeye aws s3 ekleniyor
+//Projeye aws s3 ekleniyor TODO: File upload sistemi eklendi pull request atildi Code Review yapilip tekrar pull atilip daha sonrasinda merge alinacak.
 
 ### 6.4. PATCH `/api/v1/orders/:id/status` - Durum Güncelle (Admin/Restoran)
 

@@ -13,7 +13,7 @@ export class S3Service {
   private readonly logger = new Logger(S3Service.name);
 
   constructor(private readonly configService: ConfigService) {
-    this.bucketName = this.configService.get<string>('AWS_BUCKET_NAME', '');
+    this.bucketName = this.configService.get<string>('AWS_BUCKET_NAME')!;
 
     this.s3Client = new S3Client({
       region: this.configService.get<string>('AWS_REGION')!,
@@ -27,6 +27,16 @@ export class S3Service {
   }
 
   async uploadFile(file: Express.Multer.File) {
+    if (!file || !file.buffer || !file.originalname) {
+      throw new Error('Invalid File: missing required properties');
+    }
+
+    // 10MB Limit
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    if (file.buffer.length > MAX_FILE_SIZE) {
+      throw new Error('File size exceeds the 10MB limit');
+    }
+
     const key = `${Date.now()}-${file.originalname}`;
 
     try {
