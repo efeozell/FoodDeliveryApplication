@@ -295,6 +295,17 @@ export class RestaurantsService {
     }
   }
 
+  async saveRestaurant(restaurant: Restaurant) {
+    try {
+      return await this.restaurantRepo.save(restaurant);
+    } catch (error) {
+      console.log('Error in saveRestaurant: ', error);
+      throw new InternalServerErrorException(
+        'Restoran kaydedilirken bir hata oluştu!',
+      );
+    }
+  }
+
   async updateRestaurant(id: string, data: UpdateRestaurantDto) {
     try {
       const isRestaurantExist = await this.restaurantRepo.findOne({
@@ -347,7 +358,7 @@ export class RestaurantsService {
   async addMenuItemsByRestaurantId(
     id: string,
     data: CreateMenuItemsDto,
-    file: any,
+    imageUrl?: string,
   ) {
     try {
       const isRestaurantExist = await this.restaurantRepo.findOne({
@@ -370,7 +381,7 @@ export class RestaurantsService {
         restaurant: isRestaurantExist,
         category: category,
         ...data,
-        imageUrl: file,
+        imageUrl,
       });
       const savedMenuItem = await this.menuItemRepo.save(newMenuItem);
 
