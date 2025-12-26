@@ -232,9 +232,6 @@ export class OrderService {
     //Gelen istekdeki kullanicinin restoran sahibi olup olmadigini kontrol etmemiz gerekiyor. Bunu yapmak icin,
     //order kaydindan restoranId'yi alip kullanicinin sahip oldugu restoranlarla karsilastirmamiz lazim.
 
-    console.log('Order.restaurantId: ' + order.restaurantId);
-    console.log(order.restaurant);
-
     if (userId.role === UserRole.RESTAURANT_OWNER) {
       if (order.restaurantId !== order.restaurant.id) {
         throw new UnauthorizedException('Bu siparisi guncelleme yetkiniz yok');
@@ -257,9 +254,15 @@ export class OrderService {
       where: { id: orderId, userId: user.id },
     });
 
-    if (!order || order.status === OrderStatus.DELIVIRED) {
+    if (
+      !order ||
+      order.status === OrderStatus.DELIVIRED ||
+      order.status === OrderStatus.CANCELLED
+    ) {
       throw new BadRequestException('Siparis iptal edilemez');
     }
+
+    //TODO: Eger odeme yapildiysa iade islemi gerceklestirilmeli
 
     order.status = OrderStatus.CANCELLED;
 

@@ -22,6 +22,7 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Roles } from 'src/auth/decarators/roles.decorator';
 import { OrderStatus } from 'src/entity/order.entity';
 import { UpdateOrderStatusDto } from 'src/dto/update-order-status.dto';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 
 @Controller({
   path: 'order',
@@ -129,7 +130,7 @@ export class OrderController {
     return this.orderService.getOrderDetails(user, orderId);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.RESTAURANT_OWNER, UserRole.ADMIN)
   @Patch('/status/:orderId')
   async updateOrderStatus(
