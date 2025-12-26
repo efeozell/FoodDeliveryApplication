@@ -154,6 +154,18 @@ async function seed() {
           ? faker.helpers.arrayElement(istanbulDistricts)
           : faker.location.city();
 
+      // Sadece RESTAURANT_OWNER rolündeki kullanıcılar restoran sahibi olabilir
+      const ownerCandidates = users.filter(
+        (u) => u.role === UserRole.RESTAURANT_OWNER,
+      );
+      // Eğer yoksa, CUSTOMER'lardan da atanabilir veya fallback olarak herhangi bir kullanıcı atanabilir
+      let owner: User;
+      if (ownerCandidates.length > 0) {
+        owner = faker.helpers.arrayElement(ownerCandidates);
+      } else {
+        owner = faker.helpers.arrayElement(users);
+      }
+
       restaurants.push(
         restaurantRepo.create({
           name: faker.company.name() + ' Restaurant',
@@ -181,6 +193,7 @@ async function seed() {
           ),
           image: faker.image.urlLoremFlickr({ category: 'food,restaurant' }),
           isOpen: faker.datatype.boolean({ probability: 0.8 }), // %80 açık
+          owner: owner,
         }),
       );
     }

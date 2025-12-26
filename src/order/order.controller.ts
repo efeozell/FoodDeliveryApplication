@@ -6,6 +6,7 @@ import {
   HttpCode,
   Ip,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -15,9 +16,12 @@ import {
 import { OrderService } from './order.service';
 import type { Request, Response } from 'express';
 import { CurrentUser } from 'src/auth/decarators/current-user.decorator';
-import { User } from 'src/entity/user.entity';
+import { User, UserRole } from 'src/entity/user.entity';
 import { CartService } from 'src/cart/cart.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { Roles } from 'src/auth/decarators/roles.decorator';
+import { OrderStatus } from 'src/entity/order.entity';
+import { UpdateOrderStatusDto } from 'src/dto/update-order-status.dto';
 
 @Controller({
   path: 'order',
@@ -123,5 +127,29 @@ export class OrderController {
     @Param('orderId') orderId: string,
   ) {
     return this.orderService.getOrderDetails(user, orderId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.RESTAURANT_OWNER, UserRole.ADMIN)
+  @Patch('/status/:orderId')
+  async updateOrderStatus(
+    @Param('orderId') orderId: string,
+    @CurrentUser() user: User,
+    @Body() updateOrderStatus: UpdateOrderStatusDto,
+  ) {
+    return this.orderService.updateOrderStatus(
+      user,
+      orderId,
+      updateOrderStatus.status,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('/cancel/:orderId')
+  async cancelOrder(
+    @CurrentUser() user: User,
+    @Param('orderId') orderId: string,
+  ) {
+    return this.orderService.cancelOrder(user, orderId);
   }
 }

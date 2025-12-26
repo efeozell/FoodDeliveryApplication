@@ -2,12 +2,15 @@ import {
   Column,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Category } from './category.entity';
 import { MenuItem } from './menu_items.entity';
 import { Order } from './order.entity';
+import { User } from './user.entity';
 
 @Entity('restaurants')
 export class Restaurant {
@@ -16,6 +19,13 @@ export class Restaurant {
 
   @Column()
   name: string;
+
+  @ManyToOne(() => User, (user) => user.restaurants)
+  @JoinColumn({ name: 'ownerId' })
+  owner: User;
+
+  @Column()
+  ownerId: string;
 
   @Column({ nullable: false })
   address: string;

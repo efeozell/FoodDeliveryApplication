@@ -1,10 +1,12 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Order } from './order.entity';
 import { Exclude } from 'class-transformer';
+import { Restaurant } from './restaurant.entity';
 
 export enum UserRole {
   ADMIN = 'ADMIN',
   CUSTOMER = 'CUSTOMER',
+  RESTAURANT_OWNER = 'RESTAURANT_OWNER',
 }
 
 @Entity('users') //users tablosu
@@ -32,6 +34,9 @@ export class User {
 
   @Column({ nullable: true })
   address: string;
+
+  @OneToMany(() => Restaurant, (restaurant) => restaurant.owner)
+  restaurants: Restaurant[];
 
   @OneToMany(() => Order, (order) => order.user)
   orders: Order[];
