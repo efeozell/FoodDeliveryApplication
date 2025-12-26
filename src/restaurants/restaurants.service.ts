@@ -283,6 +283,7 @@ export class RestaurantsService {
     try {
       const newRestaurant = this.restaurantRepo.create({
         ...data,
+        ownerId: data.ownerId,
         deliveryFee: Number(data.deliveryFee),
       });
 

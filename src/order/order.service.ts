@@ -2,10 +2,11 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Order, OrderStatus } from 'src/entity/order.entity';
-import { User } from 'src/entity/user.entity';
+import { User, UserRole } from 'src/entity/user.entity';
 import { IyzicoService } from 'src/iyzico-service/iyzico-service.service';
 import { Repository } from 'typeorm';
 import Iyzipay = require('iyzipay');
@@ -109,6 +110,8 @@ export class OrderService {
       basketItems: basketItemsForIyzico,
     };
 
+    console.log(request);
+
     const result = await this.iyzicoService.startPaymentProcess(request);
 
     if (result.status !== 'success') {
@@ -206,5 +209,65 @@ export class OrderService {
       devileredAt: order.deliveredAt || null,
       createdAt: order.createdAt,
     };
+  }
+
+  async updateOrderStatus(userId: User, orderId: string, status: OrderStatus) {
+    const order = await this.orderRepo
+      .createQueryBuilder('order')
+      .where('order.id = :orderId', { orderId })
+      .leftJoinAndSelect('order.restaurant', 'restaurant')
+      .getOne();
+
+    if (!order) {
+      throw new NotFoundException('Siparis bulunamadi');
+    }
+
+    if (
+      userId.role !== UserRole.RESTAURANT_OWNER &&
+      userId.role !== UserRole.ADMIN
+    ) {
+      throw new UnauthorizedException('Yetkiniz yok');
+    }
+
+    //Gelen istekdeki kullanicinin restoran sahibi olup olmadigini kontrol etmemiz gerekiyor. Bunu yapmak icin,
+    //order kaydindan restoranId'yi alip kullanicinin sahip oldugu restoranlarla karsilastirmamiz lazim.
+
+    if (userId.role === UserRole.RESTAURANT_OWNER) {
+      if (order.restaurantId !== order.restaurant.id) {
+        throw new UnauthorizedException('Bu siparisi guncelleme yetkiniz yok');
+      }
+    }
+
+    //eger status DELIVERED ise deliveredAt tarihini de guncelle
+    if (status === OrderStatus.DELIVIRED) {
+      order.deliveredAt = new Date();
+    }
+
+    order.status = status;
+    await this.orderRepo.save(order);
+
+    return { message: 'Siparis durumu guncellendi', orderId: order.id };
+  }
+
+  async cancelOrder(user: User, orderId: string) {
+    const order = await this.orderRepo.findOne({
+      where: { id: orderId, userId: user.id },
+    });
+
+    if (
+      !order ||
+      order.status === OrderStatus.DELIVIRED ||
+      order.status === OrderStatus.CANCELLED
+    ) {
+      throw new BadRequestException('Siparis iptal edilemez');
+    }
+
+    //TODO: Eger odeme yapildiysa iade islemi gerceklestirilmeli
+
+    order.status = OrderStatus.CANCELLED;
+
+    await this.orderRepo.save(order);
+
+    return { message: 'Siparis iptal edildi', orderId: order.id };
   }
 }

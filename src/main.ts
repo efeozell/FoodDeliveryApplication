@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
-import { VersioningType } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
@@ -12,6 +12,8 @@ async function bootstrap() {
 
   // Winston logger'ı kullan
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
+
+  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
 
   // Exception filter'ı dependency injection ile al
   const logger = app.get<Logger>(WINSTON_MODULE_NEST_PROVIDER);
